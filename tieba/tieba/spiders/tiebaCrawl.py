@@ -16,6 +16,9 @@ class TiebacrawlSpider(scrapy.Spider):
         post = l.nested_xpath("//a[@class='j_th_tit ']")
         post.add_xpath('summary', 'text()')
         post.add_xpath('link', '@href')
+        l.add_xpath('replysCount','//span[@class="threadlist_rep_num center_text"]//text()')
+        l.add_xpath('authorName','//span[@class="frs-author-name-wrap"]//text()')
+        l.add_xpath('authorMainPageUrl','//span[@class="frs-author-name-wrap"]//@href')
         return l.load_item()
 
     def getBBSUrl(self,keyword,index):

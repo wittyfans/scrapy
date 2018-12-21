@@ -1,6 +1,7 @@
 # scrapy
 The scrapy projects.
-# 
+# 贴吧爬虫开发记录
+
 ## 抓取数据并存储
 因为我要抓取很多链接，最开始的想法就是直接把所有的url给内置的start_urls方法，于是我自己写了个生成器，直接怼给了它，但发现不管用。
 翻了下官方的文档：
@@ -107,6 +108,8 @@ def parse(self, response):
 
 仔细想想这样有必要吗？用pd分析一下这个json数据看看。
 
+> Method 1
+
 ```
 summarys = []
 links = []
@@ -125,6 +128,22 @@ post
 
 ```
 
+> Method 2
+
+```
+def toPD(data):
+    post = pd.DataFrame()
+    for col in data.columns:
+        coldata = []
+        for value in data[col]:
+            for j in value:
+                coldata.append(j)
+        post[col] = pd.Series(coldata)
+    return post
+toPD(data)
+
+```
+
 输出的数据：
 
 ```
@@ -139,3 +158,15 @@ post
 
 检查了下链接，跟标题一样，那就先这样吧，继续研究深度爬取，多抓一些信息。
 
+用scrapy 的shell调试了一下，得到了这些信息的xpath的表达式:
+
+```
+l.add_xpath('replysCount','//span[@class="threadlist_rep_num center_text"]//text()') #回复数
+l.add_xpath('authorName','//span[@class="frs-author-name-wrap"]//text()') #作者名字
+l.add_xpath('authorMainPageUrl','//span[@class="frs-author-name-wrap"]//@href') #作者主页链接
+```
+
+但此时又遇到了一个新问题，当我在pandas里进行列数据合并的时候，提示出错，应该是列长不一样，也就是某些数据有遗漏。然后用
+pd.Series()解决了问题，它会将缺失的数据填充为NaN，但缺发现标题和发帖人的对应关系出错了。
+
+这时候就抛出了一个问题，既然要保留item中数据的结构，那么在合并数据的时候，是否可以保证数据的对应关系呢？

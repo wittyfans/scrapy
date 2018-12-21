@@ -13,3 +13,6 @@ class TiebaItem(scrapy.Item):
     # name = scrapy.Field()
     summary = scrapy.Field()
     link = scrapy.Field()
+    replysCount = scrapy.Field()
+    authorName = scrapy.Field()
+    authorMainPageUrl = scrapy.Field()
