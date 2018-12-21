@@ -175,6 +175,9 @@ l.add_xpath('authorMainPageUrl','//span[@class="frs-author-name-wrap"]//@href') 
 4|tieba.baidu.com/home/main/?un=%E8%99%90%E7%88%|虐爆|tieba.baidu.com/p/5983683236|104|为什么你们有那么多小姐姐一起玩
 5|tieba.baidu.com/home/main/?un=G7IP9&ie=utf-8&i|黎曦|tieba.baidu.com/p/5983616276|65|问几个问题
 
+**Tips:**
+- String 的startwith()方法可以接受多个参数，但必须是tuple，也就是string.startwith(('a','b'))
+
 但此时又遇到了一个新问题，当我在pandas里进行列数据合并的时候，提示出错，应该是列长不一样，也就是某些数据有遗漏。然后用
 pd.Series()解决了问题，它会将缺失的数据填充为NaN，但缺发现标题和发帖人的对应关系出错了。
 
