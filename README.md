@@ -167,8 +167,8 @@ l.add_xpath('authorMainPageUrl','//span[@class="frs-author-name-wrap"]//@href') 
 ```
 用panda处理了一下，得到如下数据:
 
- |**authorMainPageUrl**|**authorName**|**link**|**replysCount**|**summary**
-:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
+ |authorMainPageUrl|authorName|link|replysCount|summary
+-----|-----|-----|-----|-----|-----
 0|tieba.baidu.com/home/main/?un=SDJKGAJ&ie=utf-8...|疾风阔|tieba.baidu.com/p/5973366878|35|这一波能多少分?
 1|tieba.baidu.com/home/main/?un=%E7%BA%AF%E5%B1%...|一呼吸一...|tieba.baidu.com/p/5978804665|94|毛妹这个英雄是不是该削了?竞技把把都有，万金油的存在，她的盾
 2|tieba.baidu.com/home/main/?un=q526246486&ie=ut...|贴吧用户\_...|tieba.baidu.com/p/5924655619|41|这波刀大家打几分
