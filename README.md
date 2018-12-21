@@ -165,6 +165,16 @@ l.add_xpath('replysCount','//span[@class="threadlist_rep_num center_text"]//text
 l.add_xpath('authorName','//span[@class="frs-author-name-wrap"]//text()') #作者名字
 l.add_xpath('authorMainPageUrl','//span[@class="frs-author-name-wrap"]//@href') #作者主页链接
 ```
+用panda处理了一下，得到如下数据:
+
+ |**authorMainPageUrl**|**authorName**|**link**|**replysCount**|**summary**
+:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
+0|tieba.baidu.com/home/main/?un=SDJKGAJ&ie=utf-8...|疾风阔|tieba.baidu.com/p/5973366878|35|这一波能多少分?
+1|tieba.baidu.com/home/main/?un=%E7%BA%AF%E5%B1%...|一呼吸一...|tieba.baidu.com/p/5978804665|94|毛妹这个英雄是不是该削了?竞技把把都有，万金油的存在，她的盾
+2|tieba.baidu.com/home/main/?un=q526246486&ie=ut...|贴吧用户\_...|tieba.baidu.com/p/5924655619|41|这波刀大家打几分
+3|tieba.baidu.com/home/main/?un=%E9%99%86%E6%95%...|陆散散|tieba.baidu.com/p/5984318268|3|算了 不想骂了 鱼塘水真多我佛了
+4|tieba.baidu.com/home/main/?un=%E8%99%90%E7%88%...|虐爆|tieba.baidu.com/p/5983683236|104|为什么你们有那么多小姐姐一起玩
+5|tieba.baidu.com/home/main/?un=G7IP9&ie=utf-8&i...|黎曦|tieba.baidu.com/p/5983616276|65|问几个问题
 
 但此时又遇到了一个新问题，当我在pandas里进行列数据合并的时候，提示出错，应该是列长不一样，也就是某些数据有遗漏。然后用
 pd.Series()解决了问题，它会将缺失的数据填充为NaN，但缺发现标题和发帖人的对应关系出错了。
