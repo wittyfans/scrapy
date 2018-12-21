@@ -171,7 +171,7 @@ l.add_xpath('authorMainPageUrl','//span[@class="frs-author-name-wrap"]//@href') 
 -----|-----|-----|-----|-----|-----
 0|tieba.baidu.com/home/main/?un=SDJKGAJ&ie=utf-8...|疾风阔|tieba.baidu.com/p/5973366878|35|这一波能多少分?
 1|tieba.baidu.com/home/main/?un=%E7%BA%AF%E5%B1%...|一呼吸一...|tieba.baidu.com/p/5978804665|94|毛妹这个英雄是不是该削了?竞技把把都有，万金油的存在，她的盾
-2|tieba.baidu.com/home/main/?un=q526246486&ie=ut...|贴吧用户\_...|tieba.baidu.com/p/5924655619|41|这波刀大家打几分
+2|tieba.baidu.com/home/main/?un=q526246486&ie=ut...|贴吧用户|tieba.baidu.com/p/5924655619|41|这波刀大家打几分
 3|tieba.baidu.com/home/main/?un=%E9%99%86%E6%95%...|陆散散|tieba.baidu.com/p/5984318268|3|算了 不想骂了 鱼塘水真多我佛了
 4|tieba.baidu.com/home/main/?un=%E8%99%90%E7%88%...|虐爆|tieba.baidu.com/p/5983683236|104|为什么你们有那么多小姐姐一起玩
 5|tieba.baidu.com/home/main/?un=G7IP9&ie=utf-8&i...|黎曦|tieba.baidu.com/p/5983616276|65|问几个问题
