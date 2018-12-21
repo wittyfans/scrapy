@@ -13,8 +13,9 @@ class TiebacrawlSpider(scrapy.Spider):
 
     def parse(self, response):
         l = ItemLoader(item=TiebaItem(),response=response)
-        l.add_xpath("summarys","//a[@class='j_th_tit ']//text()")
-        l.add_xpath("links",'//a[@class="j_th_tit "]//@href')
+        post = l.nested_xpath("//a[@class='j_th_tit ']")
+        post.add_xpath('summary', 'text()')
+        post.add_xpath('link', '@href')
         return l.load_item()
 
     def getBBSUrl(self,keyword,index):
@@ -33,4 +34,4 @@ class TiebacrawlSpider(scrapy.Spider):
     def start_requests(self):
         self.logger.info("START:")
         for url in self.getBBSUrl("守望先锋",10):
-           yield self.make_requests_from_url(url)
+           yield scrapy.Request(url, callback=self.parse)
