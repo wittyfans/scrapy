@@ -5,20 +5,17 @@ from urllib.parse import quote
 import urllib.request
 import codecs
 from tieba.items import TiebaItem
+from scrapy.contrib.loader import ItemLoader
 
 class TiebacrawlSpider(scrapy.Spider):
     name = 'tiebaCrawl'
     allowed_domains = ['tieba.baidu.com']
 
     def parse(self, response):
-        alltitles = []
-        item = TiebaItem()
-        titles = response.xpath("//a[@class='j_th_tit ']//text()").extract()
-        for title in titles:
-            alltitles.append(title)
-            self.logger.info(title)
-        item["summarys"] = alltitles
-        return item
+        l = ItemLoader(item=TiebaItem(),response=response)
+        l.add_xpath("summarys","//a[@class='j_th_tit ']//text()")
+        l.add_xpath("links",'//a[@class="j_th_tit "]//@href')
+        return l.load_item()
 
     def getBBSUrl(self,keyword,index):
         encodeKeyword = quote(keyword)

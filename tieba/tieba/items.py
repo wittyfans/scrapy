@@ -12,3 +12,4 @@ class TiebaItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     summarys = scrapy.Field()
+    links = scrapy.Field()
