@@ -11,19 +11,19 @@ from scrapy.contrib.loader import ItemLoader
 class TiebacrawlSpider(scrapy.Spider):
     name = 'tiebaCrawl'
     allowed_domains = ['tieba.baidu.com']
+    urlPrefix = 'https://tieba.baidu.com'
 
     def parse(self, response):
-
         # get the next page info
         nextPageUrls = response.xpath("//a[@class='next pagination-item ']//@href")
         for url in nextPageUrls.extract():
             self.logger.info("=====Now request:{}=====".format(url))
-            yield scrapy.Request(urljoin('https://tieba.baidu.com',url))
+            yield scrapy.Request(urljoin(self.urlPrefix,url))
 
         # get the post urls and collec the info.
         postSubUrls = response.xpath("//a[@class='j_th_tit ']//@href").extract()
-        postUrls = list(map(self.addPref,postSubUrls))
-        for url in postUrls.__reversed__():
+        for subrul in postSubUrls:
+            url = urljoin(self.urlPrefix,subrul)
             yield scrapy.Request(url,callback=self.parsePost,meta={'url':url})
 
     def parsePost(self,response):
@@ -33,22 +33,18 @@ class TiebacrawlSpider(scrapy.Spider):
         l.add_value("title",title)
         l.add_xpath("replyUsers","//div[@class='d_author']//li[@class='d_name']//a[@class='p_author_name j_user_card']//text()")
         l.add_xpath("replyContent","//div[@class='d_post_content j_d_post_content ']//text()")
-        
         yield l.load_item()
 
     def start_requests(self):
         tiebaname = "守望先锋"
         self.logger.info(tiebaname)
-        start_url = self.getBBSUrl(tiebaname)
-        self.logger.info("Now request {}".format(start_url))
-        yield scrapy.Request(start_url, callback=self.parse)
-    
-    def addPref(self,url):
-        return 'https://tieba.baidu.com' + str(url)
+        encodedUrl = self.encodeUrl(tiebaname)
+        self.logger.info("Now request {}".format(encodedUrl))
+        yield scrapy.Request(encodedUrl, callback=self.parse)
 
-    def getBBSUrl(self,keyword):
+    def encodeUrl(self,keyword):
         encodeKeyword = quote(keyword)
         urlprefix = 'https://tieba.baidu.com/f?kw='
         urlend = '&ie=utf-8&pn='
-        pageUrl = urlprefix+encodeKeyword+urlend+str(0)
-        return pageUrl
+        requestUrl = urlprefix+encodeKeyword+urlend+str(0)
+        return requestUrl

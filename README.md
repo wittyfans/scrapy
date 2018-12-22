@@ -187,9 +187,49 @@ pd.Series()解决了问题，它会将缺失的数据填充为NaN，但缺发现
 
 > 目前解决问题的思路是这样的，假设一个分页有10个帖子，我一次性拿10个帖子的标题，发帖人，回复量，这10个帖子处理完了，再进行下一步。这样会遇到合并数据的问题,
 其次出来的数据，也是十条一组的存储在item里面。如果我之后再想得到这个帖子的内容，回复这个帖子的人，这些人的信息，难道再去找之前的URL，再把拿到的数据去做复杂的合并吗？
-这么一想恍然大悟，一开始我只是考虑到了爬这些标题做分析，但现在想要更多的数据，就必须换一种方法。
+这么一想觉得现在的方法不行，一开始我只是考虑到了爬这些标题做分析，但现在想要更多的数据，就必须换一种方法。
 
 Todo:
 
 - 有一个div有两个class，一个是gril, 另一个是hot gril, 那么在我通过girl定位到了这个“gril”之后，怎么知道她是hot girl呢？
 
+
+### 新的架构
+
+现在的方法是，利用深层爬取。刚开始的请求还是一样的，请求一页的数据，然后从中收集所有帖子的链接，这时候返回这一页的帖子链接的list，然后在一个个循环请求，回来的数据传给回调方法处理并存储到item里面。
+
+这里的关键在于，第一页的数据抓取完了之后，得找到下一页的链接继续请求，从请求的数据中继续找帖子，找下一页，如此循环。
+
+
+```
+def parse(self, response):
+    # get the next page info
+    nextPageUrls = response.xpath("//a[@class='next pagination-item ']//@href")
+    for url in nextPageUrls.extract():
+        self.logger.info("=====Now request:{}=====".format(url))
+        yield scrapy.Request(urljoin('https://tieba.baidu.com',url))
+
+    # get the post urls and collec the info.
+    postSubUrls = response.xpath("//a[@class='j_th_tit ']//@href").extract()
+    postUrls = list(map(self.addPref,postSubUrls))
+    for url in postUrls.__reversed__():
+        yield scrapy.Request(url,callback=self.parsePost,meta={'url':url})
+
+def parsePost(self,response):
+    l = ItemLoader(item=TiebaItem(),response=response)
+    title = response.xpath("//div[@class='core_title_wrap_bright clearfix']//text()").extract()[0]
+    l.add_value("link",response.meta['url'])
+    l.add_value("title",title)
+    l.add_xpath("replyUsers","//div[@class='d_author']//li[@class='d_name']//a[@class='p_author_name j_user_card']//text()")
+    l.add_xpath("replyContent","//div[@class='d_post_content j_d_post_content ']//text()")
+    yield l.load_item()
+
+```
+
+上面的代码，我将下一页的请求放在抽取帖子内容后面，就会出现只能抓一页的情况，折腾了半天，后参考《精通PYTHON爬虫框架Scrapy——异步图书》代码才解决，不知何故，待研究。
+
+一些技巧：
+
+- [利用meta参数，在请求之间传信息](https://www.zhihu.com/question/54773510)
+- 多利用 urljoin 来合并url，而不是自己写函数再map
+- 
