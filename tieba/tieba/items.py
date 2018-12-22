@@ -11,8 +11,7 @@ import scrapy
 class TiebaItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    summary = scrapy.Field()
     link = scrapy.Field()
-    replysCount = scrapy.Field()
-    authorName = scrapy.Field()
-    authorMainPageUrl = scrapy.Field()
+    title = scrapy.Field()
+    replyUsers = scrapy.Field()
+    replyContent = scrapy.Field()
