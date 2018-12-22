@@ -232,4 +232,5 @@ def parsePost(self,response):
 
 - [利用meta参数，在请求之间传信息](https://www.zhihu.com/question/54773510)
 - 多利用 urljoin 来合并url，而不是自己写函数再map
-- 
+
+> To be continued...
