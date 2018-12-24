@@ -183,6 +183,7 @@ pd.Series()解决了问题，它会将缺失的数据填充为NaN，但缺发现
 
 这时候就抛出了一个问题，既然要保留item中数据的结构，那么在合并数据的时候，是否可以保证数据的对应关系呢？
 
+## 2018.12.22
 **新问题的新思考：**
 
 > 目前解决问题的思路是这样的，假设一个分页有10个帖子，我一次性拿10个帖子的标题，发帖人，回复量，这10个帖子处理完了，再进行下一步。这样会遇到合并数据的问题,
@@ -234,7 +235,7 @@ def parsePost(self,response):
 - 多利用 urljoin 来合并url，而不是自己写函数再map
 - scrapy crawl name -s CLOSESPIDER_ITEMCOUNT=100 通过-s指定CLOSESPIDER_ITEMCOUNT的值可以让爬虫在爬了特定的值后停下来
 
-> 2018.12.23
+## 2018.12.23
 
 今天换了个个音乐主题的贴吧billboard吧抓数据，发现xpath表达式都抓不到东西了，检查了一下发现不同的吧某些东西还不一样，比如billboard吧和守望先锋吧帖子内容的class：
 
@@ -324,3 +325,39 @@ users
 ## todo
 
 - 下午突然想到，应该可以通过子或父节点获取这个class的属性，再去提取信息，这样就不需要判断了，直接可以根据相对关系选择它的class名
+
+## 2018.12.24
+在处理抓帖子内容的时候出现一些问题，因为有一些帖子的评论很多，也是有下一页的，虽然处理逻辑和帖子列表的差不多，但仔细研究后发现是不一样的，并且找出了之前的代码的缺陷:
+
+```
+def parse(self, response):
+        # get the post urls and collec the info.
+        postSubUrls = response.xpath("//a[@class='j_th_tit ']//@href").extract()
+        self.logger.info("==============Now Request pages==========={}".format(postSubUrls))
+        for subrul in postSubUrls:
+            url = urljoin(self.urlPrefix,subrul)
+            self.logger.info("----------Now request url============={}".format(url))
+            yield scrapy.Request(url,callback=self.parsePost,meta={'url':url})
+
+        # get the next page info
+        nextPageUrls = response.xpath("//a[@class='next pagination-item ']//@href")    
+        for url in nextPageUrls.extract():
+            yield scrapy.Request(urljoin(self.urlPrefix,url),callback=self.parse)
+
+```
+
+主要是这里的抓帖子内容和下一页的顺序对调了，以及之前我在yield下一页的时候，竟然没有指定回掉方法，这导致第一页帖子里面就有些帖子没有抓下来。随后开始研究如何抓第二页的评论，此处遇到一个大坑, 即第二页的标题变了，变成了"回复： {原来的标题}",导致新抓下来的标题都
+存到了另一个字段，我还以为没抓下来，一直在改，之所以存到了下一个字段，是因为我在下一页的请求发起之前，就已经yield返回了l.load_item().
+
+找到原因了就好办了，对于那些抓下一页的评论的帖子，它的title我们可以一开始就指定，然后通过meta传递给下一个请求，在下一个请求中判断如果meta中有title，那么title就设置为meta中的，这里在判断meta(meta是一个字典)中是否某个key的时候犯了个小错,我是这么写的:
+
+```
+if d.meta['apples']:
+```
+
+但其实应该这样写:
+
+```
+if 'apples' in d:
+```
+参见：[Check key exist in python dict](https://stackoverflow.com/questions/44035287/check-key-exist-in-python-dict/44035382)
