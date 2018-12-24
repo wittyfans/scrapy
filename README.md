@@ -198,7 +198,7 @@ Todo:
 
 现在的方法是，利用深层爬取。刚开始的请求还是一样的，请求一页的数据，然后从中收集所有帖子的链接，这时候返回这一页的帖子链接的list，然后在一个个循环请求，回来的数据传给回调方法处理并存储到item里面。
 
-这里的关键在于，第一页的数据抓取完了之后，得找到下一页的链接继续请求，从请求的数据中继续找帖子，找下一页，如此循环。
+这里的关键在于，第一页的数据抓取完了之后，得找到下一页的链接继续请求，从请求的数据中继续找帖子，找下一页，如此循环，通过指定CLOSESPIDER_ITEMCOUNT的值可以让爬虫在爬了特定的值后停下来，不然会一直继续下一页，参见下面的tips.
 
 
 ```
@@ -232,5 +232,95 @@ def parsePost(self,response):
 
 - [利用meta参数，在请求之间传信息](https://www.zhihu.com/question/54773510)
 - 多利用 urljoin 来合并url，而不是自己写函数再map
+- scrapy crawl name -s CLOSESPIDER_ITEMCOUNT=100 通过-s指定CLOSESPIDER_ITEMCOUNT的值可以让爬虫在爬了特定的值后停下来
 
-> To be continued...
+> 2018.12.23
+
+今天换了个个音乐主题的贴吧billboard吧抓数据，发现xpath表达式都抓不到东西了，检查了一下发现不同的吧某些东西还不一样，比如billboard吧和守望先锋吧帖子内容的class：
+
+- “d_post_content j_d_post_content ”
+- “d_post_content j_d_post_content  clearfix”
+
+billboard吧的class增加了一个clearfix的值，这是用来清除浮动的，要了解清楚浮动是干嘛，可以参考[这篇文章](https://www.jianshu.com/p/9d6a6fc3e398)，现在有两个办法
+
+- 找到这个clearfix的规律，有clearfix的吧或者帖子就给我们的xpath表达式加上
+- 还是按照原来的方法去取值，如果取不到，那就加上clearfix
+
+目前来看第二种方法比较简单，先试试:
+
+```
+# 标题
+title = response.xpath("//div[@class='core_title_wrap_bright clearfix']//text()")
+if title:
+    title = title.extract()[0]
+else:
+    title = response.xpath("//div[@class='core_title core_title_theme_bright']//text()").extract()[0]
+                                        
+# 链接
+l.add_value("link",response.meta['url'])
+l.add_value("title",title)
+# 跟帖用户
+l.add_xpath("replyUsers","//div[@class='d_author']//li[@class='d_name']//a[@class='p_author_name j_user_card']//text()")
+# 跟帖内容
+replyContent = response.xpath("//div[@class='d_post_content j_d_post_content  clearfix']//text()")
+if replyContent:
+    replyContent = replyContent.extract()
+else:
+    replyContent = response.xpath("//div[@class='d_post_content j_d_post_content ']//text()").extract()
+l.add_value("replyContent",replyContent)
+
+```
+没问题，成功抓到所需要的信息,现在我要抓去更多用户的信息，这帖子回复的人是个妹子还是汉子那肯定得知道不，通过分析html结果，被我发现了这么一个字段:
+
+```
+data-field="{
+
+    "author":{"user_id":2350893056,"user_name":"GYGGYFDDH","name_u":"GYGGYFDDH&ie=utf-8","user_sex":2,"portrait":"00c84759474759464444481f8c","is_like":1,"level_id":6,"level_name":"\u51cc\u6ce2\u55b5\u6b65","cur_score":118,"bawu":0,"props":null,"user_nickname":"\u767d\u00ba\u82d7\u7f2a"},
+
+    "content":{"post_id":123353095371,"is_anonym":false,"open_id":"tbclient","open_type":"android","date":"2018-12-23 10:35","vote_crypt":"","post_no":1,"type":"0","comment_num":0,"is_fold":0,"ptype":"0","is_saveface":false,"props":null,"post_index":0,"pb_tpoint":null}
+    
+    }"
+```
+
+这就是突破口了，author是用户的信息，content是这个帖子的信息，比如回复的时间。user_sex就是性别，1是男，2是女，仔细一看这里面还有用户的设备信息，比如用的是苹果还是安卓。
+试着抓一些信息下来，xpath表达式如下：
+
+```
+
+l.add_xpath("replyUsers","//div[@class='p_postlist']/div/attribute::data-field")
+
+```
+
+选取所有class是p_postlist的第一个子节点，然后选择它的叫做data-field的属性，即上面的信息了，抓到了所有的数据，用pd过滤一下：
+
+```
+usernames = []
+usersexs = []
+for users in sxyData.replyUsers:
+    for userinfo in users:
+        userInfoString = "".join(userinfo)
+        if userInfoString.startswith("{"):
+            user = pd.read_json(userInfoString)
+            usernames.append(user.author["user_name"])
+            usersexs.append(user.author["user_sex"])
+users = {'names':usernames,'sex':usersexs}
+users = pd.DataFrame(users)
+users
+```
+
+这里会从中提取出用户名和性别，因为某些数据不是以{}包装的，所以在用pd提取json对象之前，先判断一下,得到的数据如下：
+```
+0	夜和海1996	1
+1	华丽atobekeigo	2
+5	永中一小生	0
+6	哦啦啦旅途啦	0
+7	lzlzyz	1
+
+```
+- 1：男生
+- 2：女生
+- 0:未知
+
+## todo
+
+- 下午突然想到，应该可以通过子或父节点获取这个class的属性，再去提取信息，这样就不需要判断了，直接可以根据相对关系选择它的class名

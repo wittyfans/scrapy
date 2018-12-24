@@ -3,7 +3,6 @@ import scrapy
 import bs4 as bs
 from urllib.parse import quote
 from urllib.parse import urljoin
-import urllib.request
 import codecs
 from tieba.items import TiebaItem
 from scrapy.contrib.loader import ItemLoader
@@ -17,7 +16,6 @@ class TiebacrawlSpider(scrapy.Spider):
         # get the next page info
         nextPageUrls = response.xpath("//a[@class='next pagination-item ']//@href")
         for url in nextPageUrls.extract():
-            self.logger.info("=====Now request:{}=====".format(url))
             yield scrapy.Request(urljoin(self.urlPrefix,url))
 
         # get the post urls and collec the info.
@@ -28,15 +26,29 @@ class TiebacrawlSpider(scrapy.Spider):
 
     def parsePost(self,response):
         l = ItemLoader(item=TiebaItem(),response=response)
-        title = response.xpath("//div[@class='core_title_wrap_bright clearfix']//text()").extract()[0]
+        # 标题
+        title = response.xpath("//div[@class='core_title_wrap_bright clearfix']//text()")
+        if title:
+            title = title.extract()[0]
+        else:
+            title = response.xpath("//div[@class='core_title core_title_theme_bright']//text()").extract()[0]
+                                              
+        # 链接
         l.add_value("link",response.meta['url'])
         l.add_value("title",title)
-        l.add_xpath("replyUsers","//div[@class='d_author']//li[@class='d_name']//a[@class='p_author_name j_user_card']//text()")
-        l.add_xpath("replyContent","//div[@class='d_post_content j_d_post_content ']//text()")
+        # 跟帖用户
+        l.add_xpath("replyUsers","//div[@class='p_postlist']/div/attribute::data-field")
+        # 跟帖内容
+        replyContent = response.xpath("//div[@class='d_post_content j_d_post_content  clearfix']//text()")
+        if replyContent:
+            replyContent = replyContent.extract()
+        else:
+            replyContent = response.xpath("//div[@class='d_post_content j_d_post_content ']//text()").extract()
+        l.add_value("replyContent",replyContent)
         yield l.load_item()
 
     def start_requests(self):
-        tiebaname = "守望先锋"
+        tiebaname = "湖南商学院"
         self.logger.info(tiebaname)
         encodedUrl = self.encodeUrl(tiebaname)
         self.logger.info("Now request {}".format(encodedUrl))
