@@ -361,3 +361,94 @@ if d.meta['apples']:
 if 'apples' in d:
 ```
 参见：[Check key exist in python dict](https://stackoverflow.com/questions/44035287/check-key-exist-in-python-dict/44035382)
+
+但这样抓下来的帖子还是有一个问题，当爬虫爬下一个评论页的时候，这一页的数据它就会返回，所以在json数据中，就会有标题，链接重复，但评论和跟帖用户不一样的数据，本来的数据是一个帖子一条数据，但现在是只要这个帖子又下一页的评论，就会新建一条数据，虽然它的标题和链接是一样的。
+
+这问题困扰了我好几天，还是没有找到解决的办法，尝试过:
+
+- 在爬取comments的过程中，不yeild数据，将爬下来的评论append给meta，回调方法指向自身，重复直到没有下一页为止，但这样scrapy直接把之前的数据都丢掉了，可能是因为每次重新
+进入方法的时候，都new了一个新的itemLoader。
+
+> 暂时搁置一下，反正帖子标题是一样的，后面用pandas处理一下吧。
+
+# Pandas 常用操作
+```
+1. 更改列的顺序
+pdusersInfo = pdusersInfo[['username','sex','platform']]
+
+2. 从字典构造DataFrame
+usersInfo = {'username':username,'sex':usersex,'platform':platform}
+pdusersInfo = pd.DataFrame.from_dict(usersInfo)
+
+3. 本地json转换成pd数据
+import json
+with open("path/filename.json",encoding="utf-8") as jsonFile:
+    data = json.load(jsonFile)
+pdJson = pd.DataFrame(data)
+
+4.数据分段统计，bins是分段的标记，ages为数据，数据将会按照18-25,25-35等分段统计，right为控制数据偏向哪一边
+ages = [20,22,21,27,47,33,67,42,100,60,60]
+bins = [18,25,35,60,100]
+
+cats = pd.cut(ages,bins,right=False)
+pd.value_counts(cats)
+
+5. 去重复
+data.drop_duplicates() -> 去掉所有列的数据都一样的
+data.drop_duplicates(["name","age"]) -> 去除名字和年龄一样的数据
+
+6. 合并两个表
+c = a.append(b)
+c.data.drop_duplicates()
+
+7. 统计列中某个值出现的次数
+pd.value_counts(colname.value)
+```
+
+# Git 
+## Basic Commans
+
+> 参考[Git远程操作详解 - 阮一峰](http://www.ruanyifeng.com/blog/2014/06/git_remote.html)
+
+## 错误处理
+- Please commit your changes or stash them before you merge.
+    1. git reset --hard, 回退
+	2. git pull, 取回远程库的更新，覆盖本地的
+
+# xpath
+```
+1. 进入scrapy调试界面
+scrapy shell 'url'
+
+2. 调试界面使用xpath
+response.xpath('')
+
+3. 抓取指定类的元素,//为获取所有元素，返回的是list，所有如果在上一级使用了//,那么下一级也是用//,如果是/,那么提取的就是该list中的第一个元素
+xpath('//div[@class="title"]//text()'),text()为获取该元素下的文本，如果需要纯文本，还需要在后面加extract()方法
+
+4. 提取属性
+xpath("//div[@class='pb_footer']//ul[@class='l_posts_num']//a//@href"),主要是后面的@href
+
+
+```
+
+# scrapy 
+## setting
+> 这里说的设置，只要在setting.py中添加一条记录即可
+
+1. 设置utf-8格式，避免中文出错
+FEED_EXPORT_ENCODING = 'utf-8'
+
+2. 不遵守网站的爬虫策略
+ROBOTSTXT_OBEY = False
+
+## commands
+1. 启动爬虫
+scrapy crawl CrawlerName
+
+2. 启动爬虫，导出数据为json
+scrapy crawl CrawlerName -o filename.json 
+
+3. 爬了指定的数据后，就关闭
+scrapy crawl CrawlerName -o filename.json -s CLOSESPIDER_ITEMCOUNT=50
+
