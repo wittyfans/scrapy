@@ -66,7 +66,7 @@ class TiebacrawlSpider(scrapy.Spider):
         yield l.load_item()
 
     def start_requests(self):
-        tiebaname = "湖南商学院"
+        tiebaname = "渤海大学"
         self.logger.info(tiebaname)
         encodedUrl = self.encodeUrl(tiebaname)
         self.logger.info("Now request {}".format(encodedUrl))
