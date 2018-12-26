@@ -16,8 +16,9 @@ class TiebacrawlSpider(scrapy.Spider):
         # get the post urls and collec the info.
         postSubUrls = response.xpath("//a[@class='j_th_tit ']//@href").extract()
         for subrul in postSubUrls:
+            self.logger.info("=========Request======={}".format(postSubUrls))
             url = urljoin(self.urlPrefix,subrul)
-            yield scrapy.Request(url,callback=self.parsePost,meta={'url':url})
+            yield scrapy.Request(url,callback=self.parsePost)
 
         # get the next page info
         nextPageUrls = response.xpath("//a[@class='next pagination-item ']//@href")    
@@ -39,10 +40,10 @@ class TiebacrawlSpider(scrapy.Spider):
             meta['title'] = title
         l.add_value('title',title)
         # link
-        l.add_value('link',response.meta['url'])
+        l.add_value('link',response.url)
         
         # 跟帖用户
-        # l.add_xpath("replyUsers","//div[@class='p_postlist']/div/attribute::data-field")
+        l.add_xpath("replyUsers","//div[@class='p_postlist']/div/attribute::data-field")
         
         # 跟帖内容
         replyContent = response.xpath("//div[@class='d_post_content j_d_post_content  clearfix']//text()")
@@ -65,7 +66,7 @@ class TiebacrawlSpider(scrapy.Spider):
         yield l.load_item()
 
     def start_requests(self):
-        tiebaname = "守望先锋"
+        tiebaname = "湖南商学院"
         self.logger.info(tiebaname)
         encodedUrl = self.encodeUrl(tiebaname)
         self.logger.info("Now request {}".format(encodedUrl))
