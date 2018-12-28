@@ -457,3 +457,24 @@ scrapy crawl CrawlerName -o filename.json
 3. 爬了指定的数据后，就关闭
 scrapy crawl CrawlerName -o filename.json -s CLOSESPIDER_ITEMCOUNT=50
 
+# Linux 连接 Windows SMB共享文件夹
+
+1. 安装pysmb, pip install pysmb
+2. 导入相关的包
+3. 使用方法见注释
+
+> 参考：
+- [SMBConnection Class](https://pysmb.readthedocs.io/en/latest/api/smb_SMBConnection.html)
+- [一个小任务](http://melonteam.com/posts/cong_yi_ge_xiao_ren_wu_kai_shi__python_xue_xi_bi_ji/#%E5%85%B3%E4%BA%8E%E7%88%AC%E8%99%AB)
+
+```
+from smb.SMBConnection import SMBConnection
+# 新建连接对象
+conn = SMBConnection('domain_user_name', 'you_password', 'device_hostname', 'server_ip', domain = 'domain_address', use_ntlm_v2=True, is_direct_tcp=True)
+# 返回值为布尔型，表示连接成功与否
+result = conn.connect('server_ip', 445)
+
+# 检索文件
+for f in conn.listPath('share_folder_name','folder_name_in_prvious_one'):
+    print(f.filename)
+```
