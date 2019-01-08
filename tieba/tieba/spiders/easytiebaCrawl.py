@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import CrawlSpider, Rule
 import bs4 as bs
 from urllib.parse import quote
 from urllib.parse import urljoin
@@ -7,12 +9,19 @@ import codecs
 from tieba.items import TiebaItem
 from scrapy.contrib.loader import ItemLoader
 
-class TiebacrawlSpider(scrapy.Spider):
-    name = 'tiebaCrawl'
+
+class EasytiebacrawlSpider(CrawlSpider):
+    name = 'easytiebaCrawl'
     allowed_domains = ['tieba.baidu.com']
     urlPrefix = 'https://tieba.baidu.com'
+    start_urls = ["http://tieba.baidu.com/f?kw=%E6%B9%96%E5%8D%97%E6%B6%89%E5%A4%96%E7%BB%8F%E6%B5%8E%E5%AD%A6%E9%99%A2&ie=utf-8&pn=0"]
 
-    def parse(self, response):
+    rules = (
+        Rule(LinkExtractor(restrict_xpaths="//div[@class='pb_footer']//ul[@class='l_posts_num']//a"),callback='parsepage'),
+        Rule(LinkExtractor(restrict_xpaths="//a[@class='j_th_tit ']"),callback='parsePost')
+    )
+
+    def parsepage(self, response):
         # get the post urls and collec the info.
         postSubUrls = response.xpath("//a[@class='j_th_tit ']//@href").extract()
         for subrul in postSubUrls:
@@ -23,7 +32,7 @@ class TiebacrawlSpider(scrapy.Spider):
         # get the next page info
         nextPageUrls = response.xpath("//a[@class='next pagination-item ']//@href")    
         for url in nextPageUrls.extract():
-            yield scrapy.Request(urljoin(self.urlPrefix,url),callback=self.parse)
+            yield scrapy.Request(urljoin(self.urlPrefix,url),callback=self.parsepage)
 
     def parsePost(self,response):
         meta = response.meta
@@ -64,17 +73,3 @@ class TiebacrawlSpider(scrapy.Spider):
                 nextPageUrl = urljoin(self.urlPrefix,nextPage.extract())
                 yield scrapy.Request(nextPageUrl,callback=self.parsePost,meta=meta)
         yield l.load_item()
-
-    def start_requests(self):
-        tiebaname = "湖南涉外经济学院"
-        self.logger.info(tiebaname)
-        encodedUrl = self.encodeUrl(tiebaname)
-        self.logger.info("Now request {}".format(encodedUrl))
-        yield scrapy.Request(encodedUrl, callback=self.parse)
-
-    def encodeUrl(self,keyword):
-        encodeKeyword = quote(keyword)
-        urlprefix = 'https://tieba.baidu.com/f?kw='
-        urlend = '&ie=utf-8&pn='
-        requestUrl = urlprefix+encodeKeyword+urlend+str(0)
-        return requestUrl

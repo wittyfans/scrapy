@@ -376,51 +376,68 @@ if 'apples' in d:
 
 不过基本可以确定，评论中的第一条就是楼主，先把楼主的信息抓出来吧。
 
-# Pandas 常用操作
+## 2019.01.07
+
+今天了解到scrapy的另一个特性，即CrawlSpider类型的爬虫，在这个爬虫里面，它可以像下面这样去抽取post的连接和下一页的链接：
+
 ```
-1. 更改列的顺序
-pdusersInfo = pdusersInfo[['username','sex','platform']]
+rules = (
+    Rule(LinkExtractor(restrict_xpaths="//div[@class='pb_footer']//ul[@class='l_posts_num']//a"),callback='parse'),
+    Rule(LinkExtractor(restrict_xpaths="//a[@class='j_th_tit ']"),callback='parsePost')
+)
 
-2. 从字典构造DataFrame
-usersInfo = {'username':username,'sex':usersex,'platform':platform}
-pdusersInfo = pd.DataFrame.from_dict(usersInfo)
-
-3. 本地json转换成pd数据
-import json
-with open("path/filename.json",encoding="utf-8") as jsonFile:
-    data = json.load(jsonFile)
-pdJson = pd.DataFrame(data)
-
-4.数据分段统计，bins是分段的标记，ages为数据，数据将会按照18-25,25-35等分段统计，right为控制数据偏向哪一边
-ages = [20,22,21,27,47,33,67,42,100,60,60]
-bins = [18,25,35,60,100]
-
-cats = pd.cut(ages,bins,right=False)
-pd.value_counts(cats)
-
-5. 去重复
-data.drop_duplicates() -> 去掉所有列的数据都一样的
-data.drop_duplicates(["name","age"]) -> 去除名字和年龄一样的数据
-
-6. 合并两个表
-c = a.append(b)
-c.data.drop_duplicates()
-
-7. 统计列中某个值出现的次数
-pd.value_counts(colname.value)
 ```
 
-# Git 
-## Basic Commans
+《精通python爬虫》这本书上说：
 
-> 参考[Git远程操作详解 - 阮一峰](http://www.ruanyifeng.com/blog/2014/06/git_remote.html)
+> Rule中可以指定回调函数，也就是上面我写的callback='parse'(这里只能是函数的字符串名字，而不是self.parse)。如果我们没有指定callback函数，那么scrapy将会跟踪已经抽取的链接，如果你希望跟踪链接，那么需要再callback中使用return或yield返回它们，或者将Rule的follow参数设置为true，当你的页面既包含item又包含其他有用的导航链接时，该功能可能会非常有用。
 
-## 错误处理
-- Please commit your changes or stash them before you merge.
-    1. git reset --hard, 回退
-	2. git pull, 取回远程库的更新，覆盖本地的
+看完这一段，我有几个疑问：
 
-# xpath
+- callback函数中，如何拿到想跟踪的链接？
+- yield的链接，直接返回这个链接，还是返回response对象？
+- 返回的数据（或者链接），由谁来处理？
+
+
+rules: 是Rule对象的集合，用于匹配目标网站并排除干扰
+parse_start_url: 用于爬取起始响应，必须要返回Item，Request中的一个。
+
+查了一些资料，rules的规则：
+
+```
+rules = [
+    Rule(
+        link_extractor,     # LinkExtractor对象
+        callback=None,      # 请求到响应数据时的回调函数
+        cb_kwargs=None,     # 调用函数设置的参数,不要指定为parse
+        follow=None,        # 是否从response跟进链接，为布尔值
+        process_links=None, # 过滤linkextractor列表，每次获取列表时都会调用
+        process_request=None    # 过滤request,每次提取request都会调用
+    )
+] 
+
+```
+
+LinkExtractor的参数
+```
+
+class scrapy.contrib.linkextractor.sgml.SgmlLinkExtractor(
+    allow = (),         # 符合正则表达式参数的数据会被提取
+    deny = (),          # 符合正则表达式参数的数据禁止提取
+    allow_domains = (),     # 包含的域名中可以提取数据
+    deny_domains = (),      # 包含的域名中禁止提取数据
+    deny_extensions = (),       
+    restrict_xpath = (),        # 使用xpath提取数据，和allow共同起作用
+    tags = (),          # 根据标签名称提取数据
+    attrs = (),         # 根据标签属性提取数据
+    canonicalize = (),
+    unique = True,          # 剔除重复链接请求
+    process_value = None
+)
+
+```
+
+# xpath参考
 ```
 1. 进入scrapy调试界面
 scrapy shell 'url'
@@ -437,7 +454,7 @@ xpath("//div[@class='pb_footer']//ul[@class='l_posts_num']//a//@href"),主要是
 
 ```
 
-# scrapy 
+# scrapy参考
 ## setting
 > 这里说的设置，只要在setting.py中添加一条记录即可
 
