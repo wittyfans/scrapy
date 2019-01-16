@@ -474,6 +474,23 @@ scrapy crawl CrawlerName -o filename.json
 3. 爬了指定的数据后，就关闭
 scrapy crawl CrawlerName -o filename.json -s CLOSESPIDER_ITEMCOUNT=50
 
+## shell
+scrapy shell环境下，配置user-agent:
+
+```
+
+url = 'http://www.example.com'
+request = scrapy.Request(url, headers={'User-Agent': 'Mybot'})
+fetch(request)
+
+```
+
+
+4. 生成爬虫
+scrapy genspider -l 查看可用的模版
+scrapy genspider -t crawl name url 
+
+
 # Linux 连接 Windows SMB共享文件夹
 
 1. 安装pysmb, pip install pysmb
